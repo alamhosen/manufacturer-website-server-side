@@ -33,7 +33,11 @@ async function run() {
             res.send(category);
         })
 
- 
+        // get parts make
+        app.get('/make', async (req, res) => {
+            const make = await makeCollection.find().toArray();
+            res.send(make);
+        })
     }
     finally {
 
