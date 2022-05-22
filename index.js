@@ -17,6 +17,16 @@ console.log(uri);
 async function run() {
     try {
         await client.connect();
+        const partsCollection = client.db('carPats_plus').collection('parts');
+        const categoryCollection = client.db('carPats_plus').collection('category');
+        const makeCollection = client.db('carPats_plus').collection('make');
+
+        // get parts
+        app.get('/parts', async (req, res) => {
+            const parts = await partsCollection.find().toArray();
+            res.send(parts);
+        })
+
         
     }
     finally {
