@@ -20,6 +20,7 @@ async function run() {
         const partsCollection = client.db('carPats_plus').collection('parts');
         const categoryCollection = client.db('carPats_plus').collection('category');
         const makeCollection = client.db('carPats_plus').collection('make');
+        const orderCollection = client.db('carPats_plus').collection('order');
 
         // get parts
         app.get('/parts', async (req, res) => {
@@ -45,6 +46,13 @@ async function run() {
             const query = {_id: ObjectId(id)};
             const parts = await partsCollection.findOne(query);
             res.send(parts);
+        })
+
+        // add order
+        app.post('/order', async(req, res) =>{
+            const order = req.body;
+            const result = await orderCollection.insertOne(order);
+            res.send(result);
         })
     }
     finally {
