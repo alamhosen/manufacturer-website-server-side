@@ -71,7 +71,11 @@ async function run() {
             res.send(order)
         })
 
-        
+        // get review 
+        app.get ('/review', async(req, res) =>{
+            const review = await reviewCollection.find().toArray();
+            res.send(review)
+        })
 
         // Add review
         app.post('/review', async(req, res) =>{
