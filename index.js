@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { get } = require('express/lib/response');
 require('dotenv').config();
 const app = express()
 const port = process.env.PORT || 5000
@@ -21,6 +22,7 @@ async function run() {
         const categoryCollection = client.db('carPats_plus').collection('category');
         const makeCollection = client.db('carPats_plus').collection('make');
         const orderCollection = client.db('carPats_plus').collection('order');
+        const reviewCollection = client.db('carPats_plus').collection('review');
 
         // get parts
         app.get('/parts', async (req, res) => {
@@ -54,6 +56,31 @@ async function run() {
             const result = await orderCollection.insertOne(order);
             res.send(result);
         })
+
+        //get order
+        app.get('/order', async (req, res) => {
+            const order = await orderCollection.find().toArray();
+            res.send(order);
+        })
+
+        // get specific user orders by email
+        app.get('/order/:email', async(req, res) => {
+            const email = req.params.email;
+            const query = {email: email}
+            const order = await orderCollection.find(query).toArray()
+            res.send(order)
+        })
+
+        
+
+        // Add review
+        app.post('/review', async(req, res) =>{
+            const review = req.body;
+            const result = await reviewCollection.insertOne(review);
+            res.send(result);
+
+        })
+
     }
     finally {
 
