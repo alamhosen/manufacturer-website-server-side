@@ -23,6 +23,7 @@ async function run() {
         const makeCollection = client.db('carPats_plus').collection('make');
         const orderCollection = client.db('carPats_plus').collection('order');
         const reviewCollection = client.db('carPats_plus').collection('review');
+        const profileCollection = client.db('carPats_plus').collection('profile');
 
         // get parts
         app.get('/parts', async (req, res) => {
@@ -48,6 +49,20 @@ async function run() {
             const query = {_id: ObjectId(id)};
             const parts = await partsCollection.findOne(query);
             res.send(parts);
+        })
+
+        // put user profile info
+        app.put('/profile/:email', async (req, res) => {
+            const email = req.params.email;
+            const profile = req.body;
+            const filter = { email: email };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: profile,
+            };
+            const result = await profileCollection.updateOne(filter, updateDoc, options)
+            
+            res.send(result);
         })
 
         // add order
