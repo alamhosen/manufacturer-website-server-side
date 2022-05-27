@@ -65,6 +65,14 @@ async function run() {
             res.send(result);
         })
 
+        // get user profile info
+        app.get('/profile/:email', async(req, res) => {
+            const email = req.params.email;
+            const query = {email:email};
+            const profile = await profileCollection.find(query).toArray()
+            res.send(profile);
+        })
+
         // add order
         app.post('/order', async(req, res) =>{
             const order = req.body;
