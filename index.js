@@ -82,6 +82,27 @@ async function run() {
             res.send({ result, token });
         })
 
+        
+
+        // make user admin
+        app.put('/user/admin/:email',verifyjwt, async (req, res) => {
+            const email = req.params.email;
+            const requester = req.decoded.email;
+            const requesterAccount = await userCollection.findOne({ email: requester })
+            if (requesterAccount === 'admin') {
+                const filter = { email: email };
+                const updateDoc = {
+                    $set: { role: 'admin' },
+                };
+                const result = await userCollection.updateOne(filter, updateDoc)
+
+                res.send(result);
+            } else{
+                res.status(403).send({message: 'forbidden'})
+            }
+
+        })
+
         // send product info to purchase page
         app.get('/parts/:id', async (req, res) => {
             const id = req.params.id;
@@ -89,6 +110,7 @@ async function run() {
             const parts = await partsCollection.findOne(query);
             res.send(parts);
         })
+
 
         // put user profile info
         app.put('/profile/:email', async (req, res) => {
@@ -132,7 +154,7 @@ async function run() {
             if (email === decodedEmail) {
                 const query = { email: email }
                 const order = await orderCollection.find(query).toArray()
-               return res.send(order)
+                return res.send(order)
             }
             else {
                 return res.status(403).send({ message: 'Forbidded access' })
