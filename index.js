@@ -56,6 +56,14 @@ async function run() {
 
         })
 
+         // delete parts
+         app.delete ('/parts/:id',verifyjwt, async(req, res) =>{
+            const id = req.params.id;
+            const filter = {_id: ObjectId(id)};
+            const result = await partsCollection.deleteOne(filter);
+            res.send(result);
+        })
+
         // get category
         app.get('/category', async (req, res) => {
             const category = await categoryCollection.find().toArray();
