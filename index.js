@@ -48,6 +48,14 @@ async function run() {
             res.send(parts);
         })
 
+        // add parts
+        app.post('/parts', async (req, res) => {
+            const parts = req.body;
+            const result = await partsCollection.insertOne(parts);
+            res.send(result);
+
+        })
+
         // get category
         app.get('/category', async (req, res) => {
             const category = await categoryCollection.find().toArray();
@@ -83,31 +91,31 @@ async function run() {
         })
 
         // check isAdmin
-        app.get('/admin/:email', async(req, res) => {
+        app.get('/admin/:email', async(req, res) =>{
             const email = req.params.email;
-            const user = await userCollection.findOne({email: email})
+            const user = await userCollection.findOne({email: email});
             const isAdmin = user.role === 'admin';
             res.send({admin: isAdmin})
-        })
+          })
 
         // make user admin
-        app.put('/user/admin/:email',verifyjwt, async (req, res) => {
+        app.put('/user/admin/:email', verifyjwt, async (req, res) => {
             const email = req.params.email;
             const requester = req.decoded.email;
-            const requesterAccount = await userCollection.findOne({ email: requester })
-            if (requesterAccount === 'admin') {
-                const filter = { email: email };
-                const updateDoc = {
-                    $set: { role: 'admin' },
-                };
-                const result = await userCollection.updateOne(filter, updateDoc)
-
-                res.send(result);
-            } else{
-                res.status(403).send({message: 'forbidden'})
+            const requesterAccount = await userCollection.findOne({ email: requester });
+            if (requesterAccount.role === 'admin') {
+              const filter = { email: email };
+              const updateDoc = {
+                $set: { role: 'admin' },
+              };
+              const result = await userCollection.updateOne(filter, updateDoc);
+              res.send(result);
             }
-
-        })
+            else{
+              res.status(403).send({message: 'forbidden'});
+            }
+      
+          })
 
         // send product info to purchase page
         app.get('/parts/:id', async (req, res) => {
