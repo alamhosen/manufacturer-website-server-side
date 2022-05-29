@@ -4,6 +4,8 @@ const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const { get } = require('express/lib/response');
 require('dotenv').config();
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+
 const app = express()
 const port = process.env.PORT || 5000
 
@@ -56,10 +58,10 @@ async function run() {
 
         })
 
-         // delete parts
-         app.delete ('/parts/:id',verifyjwt, async(req, res) =>{
+        // delete parts
+        app.delete('/parts/:id', verifyjwt, async (req, res) => {
             const id = req.params.id;
-            const filter = {_id: ObjectId(id)};
+            const filter = { _id: ObjectId(id) };
             const result = await partsCollection.deleteOne(filter);
             res.send(result);
         })
@@ -99,20 +101,20 @@ async function run() {
         })
 
         // check isUser
-        app.get('/user/:email', async(req, res) =>{
+        app.get('/user/:email', async (req, res) => {
             const email = req.params.email;
-            const user = await userCollection.findOne({email: email});
+            const user = await userCollection.findOne({ email: email });
             const isUser = user.role !== 'admin';
-            res.send({normalUser: isUser})
-          })
+            res.send({ normalUser: isUser })
+        })
 
         // check isAdmin
-        app.get('/admin/:email', async(req, res) =>{
+        app.get('/admin/:email', async (req, res) => {
             const email = req.params.email;
-            const user = await userCollection.findOne({email: email});
+            const user = await userCollection.findOne({ email: email });
             const isAdmin = user.role === 'admin';
-            res.send({admin: isAdmin})
-          })
+            res.send({ admin: isAdmin })
+        })
 
         // make user admin
         app.put('/user/admin/:email', verifyjwt, async (req, res) => {
@@ -120,18 +122,18 @@ async function run() {
             const requester = req.decoded.email;
             const requesterAccount = await userCollection.findOne({ email: requester });
             if (requesterAccount.role === 'admin') {
-              const filter = { email: email };
-              const updateDoc = {
-                $set: { role: 'admin' },
-              };
-              const result = await userCollection.updateOne(filter, updateDoc);
-              res.send(result);
+                const filter = { email: email };
+                const updateDoc = {
+                    $set: { role: 'admin' },
+                };
+                const result = await userCollection.updateOne(filter, updateDoc);
+                res.send(result);
             }
-            else{
-              res.status(403).send({message: 'forbidden'});
+            else {
+                res.status(403).send({ message: 'forbidden' });
             }
-      
-          })
+
+        })
 
         // send product info to purchase page
         app.get('/parts/:id', async (req, res) => {
@@ -140,6 +142,20 @@ async function run() {
             const parts = await partsCollection.findOne(query);
             res.send(parts);
         })
+
+        // payment 
+        app.post('/create-payment-intent', verifyjwt, async(req, res) =>{
+            const parts = req.body;
+            const price = parts.totalPrice;
+            const amount = price*100;
+            const paymentIntent = await stripe.paymentIntents.create({
+              amount : amount,
+              currency: 'usd',
+              payment_method_types:['card']
+            });
+            res.send({clientSecret: paymentIntent.client_secret})
+          });
+      
 
 
         // put user profile info
@@ -171,25 +187,20 @@ async function run() {
             res.send(result);
         })
 
-        //get order
-        app.get('/order', async (req, res) => {
-            const order = await orderCollection.find().toArray();
-            res.send(order);
-        })
-
         // get specific user orders by email
-        app.get('/order/:email', verifyjwt, async (req, res) => {
-            const email = req.params.email;
-            const decodedEmail = req.decoded.email;
-            if (email === decodedEmail) {
+        app.get('/order', verifyjwt, async (req, res) => {
+            const email = req.query.email;
                 const query = { email: email }
                 const order = await orderCollection.find(query).toArray()
                 return res.send(order)
-            }
-            else {
-                return res.status(403).send({ message: 'Forbidded access' })
-            }
+        })
 
+        // get specific order by id
+        app.get('/order/:id', verifyjwt, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const order = await orderCollection.findOne(query);
+            res.send(order);
         })
 
         // get review 
@@ -197,6 +208,7 @@ async function run() {
             const review = await reviewCollection.find().toArray();
             res.send(review)
         })
+
 
         // Add review
         app.post('/review', async (req, res) => {
