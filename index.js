@@ -145,18 +145,18 @@ async function run() {
         })
 
         // payment 
-        app.post('/create-payment-intent', verifyjwt, async(req, res) =>{
+        app.post('/create-payment-intent', verifyjwt, async (req, res) => {
             const parts = req.body;
             const price = parts.totalPrice;
-            const amount = price*100;
+            const amount = price * 100;
             const paymentIntent = await stripe.paymentIntents.create({
-              amount : amount,
-              currency: 'usd',
-              payment_method_types:['card']
+                amount: amount,
+                currency: 'usd',
+                payment_method_types: ['card']
             });
-            res.send({clientSecret: paymentIntent.client_secret})
-          });
-      
+            res.send({ clientSecret: paymentIntent.client_secret })
+        });
+
 
 
         // put user profile info
@@ -188,10 +188,11 @@ async function run() {
             res.send(result);
         })
 
-        app.patch('/order/:id', async(req, res) =>{
+
+        app.patch('/order/:id', async (req, res) => {
             const id = req.params.id;
             const payment = req.body;
-            const filter = {_id: ObjectId(id)}
+            const filter = { _id: ObjectId(id) }
             const updateDoc = {
                 $set: {
                     paid: true,
@@ -203,12 +204,25 @@ async function run() {
             res.send(updateDoc);
         })
 
+        // get all order for admin
+        app.get('/order/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = await userCollection.findOne({ email: email });
+            const isAdmin = user.role === 'admin';
+
+            if (isAdmin) {
+                const order = await orderCollection.find().toArray()
+                res.send(order)
+            }
+
+        })
+
         // get specific user orders by email
         app.get('/order', verifyjwt, async (req, res) => {
             const email = req.query.email;
-                const query = { email: email }
-                const order = await orderCollection.find(query).toArray()
-                return res.send(order)
+            const query = { email: email }
+            const order = await orderCollection.find(query).toArray()
+            return res.send(order)
         })
 
         // get specific order by id
@@ -217,6 +231,14 @@ async function run() {
             const query = { _id: ObjectId(id) };
             const order = await orderCollection.findOne(query);
             res.send(order);
+        })
+
+        // delete order
+        app.delete('/order/:id', verifyjwt, async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const result = await orderCollection.deleteOne(filter);
+            res.send(result);
         })
 
         // get review 
